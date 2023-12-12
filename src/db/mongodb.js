@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-const URI ='mongodb+srv://developer:5ZXynnb88OS0FN86@cluster0.yox1dkl.mongodb.net/eccomerce';
+export const URI ='mongodb+srv://developer:5ZXynnb88OS0FN86@cluster0.yox1dkl.mongodb.net/eccomerce';
 
 export const initDb = async () => {
     try{

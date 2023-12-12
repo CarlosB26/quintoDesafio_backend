@@ -1,22 +1,41 @@
 import  express from 'express' ;
 import path from 'path';
 import handlebars from 'express-handlebars';
+import sessions from 'express-session';
+import MongoStore from 'connect-mongo';
+import {URI} from './db/mongodb.js'
+//import cookieParser from 'cookie-parser'
 
 import productRoutes  from './routers/products.router.js';
 import homeRoutes  from './routers/home.router.js';
 import cartRoutes  from './routers/api/dbcarts.router.js';
 import realTime  from './routers/realTimeProducts.router.js';
+import sessionsRouter from './routers/sessions.router.js'
 import indexRoutes from './routers/views/index.router.js'
 import productApiRouter from './routers/api/dbproducts.router.js'
 import CartModel from '../src/dao/models/cart.model.js'
-import ProductModel from '../src/dao/models/product.model.js'
+
 
 import { __dirname } from './utils.js';
 
+const SESSION_SECRET = '1Uw?M^w4&P3h>C^28^Mx{5OmQ-CUqaff';
 
 const app = express();
 
+
+
 // Middleware para el análisis de JSON en las solicitudes
+//app.use(cookieParser(COOKIE_SECRET));
+app.use(sessions({
+  store: MongoStore.create({
+    mongoUrl: URI,
+    mongoOptions:{},
+    ttl:120,
+  }),
+  secret: SESSION_SECRET,
+  resave: true,
+  saveUninitialized: true,
+}))
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));
@@ -33,6 +52,7 @@ app.use('/', homeRoutes);
 app.use('/dbproducts', indexRoutes);
 app.use('/api/dbproducts', productApiRouter);//dbproducts
 app.use('/api/products', productRoutes);
+app.use('/api/sessions', sessionsRouter);
 app.use('/api/carts', cartRoutes); //carrito
 app.use('/realtimeproducts', realTime);
 

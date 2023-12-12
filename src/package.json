@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node .",
-    "dev": "nodemon ."
+    "dev": "nodemon --ignore src/sessions ."
   },
   "keywords": [],
   "author": "Carlos Bolaños",
