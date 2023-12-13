@@ -2,8 +2,10 @@ import  express from 'express' ;
 import path from 'path';
 import handlebars from 'express-handlebars';
 import sessions from 'express-session';
+import passport from 'passport';
 import MongoStore from 'connect-mongo';
 import {URI} from './db/mongodb.js'
+import { init as initPassport } from './config/passport.config.js'
 //import cookieParser from 'cookie-parser'
 
 import productRoutes  from './routers/products.router.js';
@@ -35,7 +37,8 @@ app.use(sessions({
   secret: SESSION_SECRET,
   resave: true,
   saveUninitialized: true,
-}))
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));
@@ -46,6 +49,10 @@ const hbs = handlebars.create({
 app.engine('handlebars', handlebars.engine());
 app.set('views', path.join(__dirname, 'views')),
 app.set('view engine', 'handlebars')
+
+initPassport();
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Usa las rutas definidas en los archivos importados
 app.use('/', homeRoutes);

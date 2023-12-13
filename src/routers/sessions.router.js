@@ -1,96 +1,83 @@
 import { Router } from "express";
 import UserModel from "../dao/models/user.model.js";
-
+import { createHash, isValidPassword } from "../utils.js";
+import passport from "passport";
 
 const router = Router();
 
-router.post("/login", async (req, res) => {
+router.post(
+  "/login",
+  passport.authenticate("login", { failureRedirect: "/login" }),
+  async (req, res) => {
+    console.log("user", req.user);
+
+    res.redirect("/profile");
+  }
+);
+
+router.post(
+  "/register",
+  passport.authenticate("register", { failureRedirect: "/register" }),
+  async (req, res) => {
+    res.redirect("/login");
+  }
+);
+
+router.post("/recoveryPassword", async (req, res) => {
   const {
     body: { email, password },
   } = req;
 
   if (!email || !password) {
-    return res.render('error', { title: 'Bienvenido✋', messageError: 'Todos los campos son requeridos' });
+    return res.render("error", {
+      title: "error",
+      messageError: "Todos los campos son requeridos",
+    });
   }
 
-  let user;
-  let role = 'user'; // Por defecto, el rol es 'user'
-
-  if (email === 'adminCoder@coder.com' && password === 'adminCod3r123') {
-    // Si las credenciales coinciden con el administrador
-    role = 'admin'; // El rol será 'admin'
-  } else {
-    // Si no es el administrador, busca en la base de datos
-    user = await UserModel.findOne({ email });
-    if (!user || user.password !== password) {
-      return res.render('error', { title: 'Bienvenido✋', messageError: 'Correo o contraseña inválidos' });
-    }
-    // Obtener el rol del usuario de la base de datos
-    role = user.role || 'user'; // Si el usuario no tiene un rol especificado, se asigna 'user' por defecto
+  const user = await UserModel.findOne({ email });
+  if (!user) {
+    return res.render("error", {
+      title: "error",
+      messageError: "Correo o contraseña inválidos",
+    });
   }
-
-  if (!user && role !== 'admin') {
-    return res.render('error', { title: 'Bienvenido✋', messageError: 'Correo o contraseña inválidos' });
-  }
-
-  const { first_name, last_name, age } = user || {};
-
-  req.session.user = {
-    first_name,
-    last_name,
-    email,
-    age,
-    role,
-  };
-
-  res.redirect('/profile');
+  user.password = createHash(password);
+  await UserModel.updateOne({ email }, user);
+  res.redirect("/login");
 });
 
-router.post("/register", async(req, res) => {
-    const {
-      body: 
-      { first_name, last_name, email, password, age,},
-    } = req;
-  
-    if( 
-      !first_name||
-      !last_name||
-      !email||
-      !password
-      ){
-          //return res.status(400).json ({message: 'todos los campos son requeridos'})
-          return res.render('error', {title: 'Bienvenido✋', messageError:'todos los campos son requeridos'})
-        }
-  
-      const user = await UserModel.create({
-          first_name, 
-          last_name, 
-          email, 
-          password, 
-          age});
-  
-      //res.status(201).json(user);
-      res.redirect('/login');
-  
-  });
+router.get("/me", (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ message: "No estas autenticado." });
+  }
+  res.status(200).json(req.session.user);
+});
 
-  router.get('/me', (req, res)=>{
-    if(!req.session.user){
-      return res.status(401).json({message: 'No estas autenticado.'});
+router.get("/logout", (req, res) => {
+  req.session.destroy((error) => {
+    if (error) {
+      return res.render("error", {
+        title: "Bienvenido✋",
+        messageError: error.message,
+      });
     }
-    res.status(200).json(req.session.user)
+    res.redirect("/login");
   });
-  
-  router.get('/logout', (req, res) => {
-    req.session.destroy((error)=>{
-      if(error){
-        return res.render('error', {title: 'Bienvenido✋', messageError: error.message})
-      }
-      res.redirect('/login');
-    })
-  });
+});
+
+router.get(
+  "/github",
+  passport.authenticate("github", { scope: ["user:email"] })
+);
+
+router.get(
+  "/github/callback",
+  passport.authenticate("github", { failureRedirect: "/login" }),
+  (req, res) => {
+    console.log("user", req.user);
+    res.redirect("/profile");
+  }
+);
 
 export default router;
-
-
-

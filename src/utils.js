@@ -1,4 +1,5 @@
 import path from 'path';
+import bcrypt from 'bcrypt'
 import url from 'url';
 
 
@@ -27,4 +28,8 @@ export const buildResponsePaginated = (data, sort, search, baseUrl = URL_BASE) =
     };
   };
 
+export const createHash = password => bcrypt.hashSync(password, bcrypt.genSaltSync(10)); 
+
+export const isValidPassword = (password, user) => bcrypt.compareSync(password, user.password);
+ 
 

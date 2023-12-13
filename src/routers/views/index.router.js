@@ -9,7 +9,7 @@ const router = Router();
 
 
 router.get("/", async (req, res) => {
-  if(!req.session.user){
+  if(!req.user){
     return res.redirect('/login')
   }
   const { limit = 10, page = 1, sort, search } = req.query;
@@ -30,7 +30,7 @@ router.get("/", async (req, res) => {
     search || null,
     "http://localhost:8080"
   );
-  res.render("dbproducts", { title: "Api Productos", ...data, user: req.session.user});
+  res.render("dbproducts", { title: "Api Productos", ...data, user: req.user.toJSON()});
 });
 
 router.get("/cart/:cid", async (req, res) => {
